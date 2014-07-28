@@ -1,15 +1,35 @@
+/*
+Copyright (c)2014, Matthew Sklar and David Sklar.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 var express = require("express");
 var app = express();
 var http = require("http");
 
+var formattedjs;
+
 function getValues(string, title, end, newLine, c) {
-	/*var betweenString = string.match(title + "(.*)" + end);
-	console.log(betweenString);*/
-	//console.log(title + "(.*)" + end);
 	var testRE;
 	if (c) testRE = JSON.stringify(string).match(title + ":" + "(.*)" + end);
 	else testRE = JSON.stringify(string).match(title + ":" + "(.*)" + end);
-	//console.log(testRE[1].replace("\\n", ""));
 	if (newLine) return(testRE[1]);
 	else return(testRE[1].replace("\\n", ""));
 }
@@ -48,7 +68,6 @@ function getValuesItems(body) {
 		var splitValue = values[i].split(',');
 		if (i != values.length - 2) formattedValue += splitValue[0] + ": " + splitValue[1] + ',\n';
 		else formattedValue += splitValue[0] + ": " + splitValue[1];
-		//console.log(splitValue);
 	}
 	return formattedValue;
 }
@@ -56,15 +75,14 @@ function getValuesItems(body) {
 app.get("/:tickersymbol/:timespan", function(req, res) {
 	var tickersymbol = req.params.tickersymbol;
 	var timespan = req.params.timespan;
-	var formattedjs = 'window.YSTOKJSDAT = {\n';
-	console.log("Ticker Symbol: " + tickersymbol + " Time span: " + timespan);
-	console.log('/instrument/1.0/' + tickersymbol + '/chardata;type=quote;range=' + timespan + '/csv');
+	formattedjs = 'window.YSTOKJSDAT = {\n';
 	var options = {
 		hostname: 'chartapi.finance.yahoo.com',
 		port: 80,
-		path: '/instrument/1.0/YUM/chartdata;type=quote;range=5d/csv',
+		path: '/instrument/1.0/' + tickersymbol + '/chartdata;type=quote;range=' + timespan + '/csv',
 		method: 'GET'
 	};
+	console.log(options.path);
 	console.log("After options");
 	var httpreq = http.request(options, function(httpres) {
 		console.log("After http request");
