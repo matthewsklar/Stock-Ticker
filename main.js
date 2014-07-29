@@ -83,10 +83,18 @@ app.get("/:tickersymbol/:timespan", function(req, res) {
 			body += chunk;
 		});
 		httpres.on('end', function() {
+			console.log("Before Formatted");
+			console.log("Before Ranges");
+			getRanges(timespan, body);
+			console.log(body);
+			console.log("After Ranges");
+			console.log("Before Values Items");
+			getValuesItems(body);
+			console.log("After Values Items");
 			formattedjs += 'symbol: "' + tickersymbol + '",\n' +
 				'name: "' + getValues(body, "Company-Name", "Exchange") + '",\n' +
 				'span: "' + timespan + '",\n' +
-				'unit: "' + getValues(body, "unit", "timezone") + '",\n' +
+				'unit: "' + getValues(body, "unit", "time") + '",\n' +
 				'ranges: {\n' +
 					getRanges(timespan, body) + '\n' +
 				'},\n' +
@@ -94,6 +102,7 @@ app.get("/:tickersymbol/:timespan", function(req, res) {
 					getValuesItems(body) + '\n' +
 				'}\n' +
 			'};';
+			console.log("After formatted");
 			console.log(formattedjs);
 			res.writeHead(httpres.statusCode, httpres.headers);
 			res.end(body);
