@@ -96,7 +96,7 @@ app.get("/:tickersymbol/:timespan", function(req, res) {
 			'};';
 			console.log(formattedjs);
 			res.writeHead(httpres.statusCode, httpres.headers);
-			res.end(body);
+			res.end(formattedjs);
 		});
 	});
 	httpreq.end();
