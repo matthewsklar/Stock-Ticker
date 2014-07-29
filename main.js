@@ -26,12 +26,9 @@ var http = require("http");
 
 var formattedjs;
 
-function getValues(string, title, end, newLine, c) {
-	var testRE;
-	if (c) testRE = JSON.stringify(string).match(title + ":" + "(.*)" + end);
-	else testRE = JSON.stringify(string).match(title + ":" + "(.*)" + end);
-	if (newLine) return(testRE[1]);
-	else return(testRE[1].replace("\\n", ""));
+function getValues(string, title, end) {
+	var testRE = JSON.stringify(string).match(title + ":" + "(.*)" + end);
+	return(testRE[1].replace("\\n", ""));
 }
 
 function getRanges(timespan, body) {
@@ -43,7 +40,7 @@ function getRanges(timespan, body) {
 			return "";
 			break;
 		case '5d' :
-			var range = getValues(body, "range", "Timestamp:", false, true);
+			var range = getValues(body, "range", "Timestamp:");
 			var splitRange = range.split('range:');
 			var formattedRange = "";
 			for (var i = 0; i < splitRange.length; i++) {
@@ -61,8 +58,6 @@ function getRanges(timespan, body) {
 
 function getValuesItems(body) {
 	var values = ((body.split("volume:")[1])).split('\n');
-	console.log(values.length);
-	console.log(values[values.length - 2]);
 	var formattedValue = "";
 	for (var i = 1; i < values.length - 1; i++) {
 		var splitValue = values[i].split(',');
@@ -82,19 +77,16 @@ app.get("/:tickersymbol/:timespan", function(req, res) {
 		path: '/instrument/1.0/' + tickersymbol + '/chartdata;type=quote;range=' + timespan + '/csv',
 		method: 'GET'
 	};
-	console.log(options.path);
-	console.log("After options");
 	var httpreq = http.request(options, function(httpres) {
-		console.log("After http request");
 		var body;
 		httpres.on('data', function(chunk) {
 			body += chunk;
 		});
 		httpres.on('end', function() {
 			formattedjs += 'symbol: "' + tickersymbol + '",\n' +
-				'name: "' + getValues(body, "Company-Name", "Exchange", false, true) + '",\n' +
+				'name: "' + getValues(body, "Company-Name", "Exchange") + '",\n' +
 				'span: "' + timespan + '",\n' +
-				'unit: "' + getValues(body, "unit", "timezone", false, true) + '",\n' +
+				'unit: "' + getValues(body, "unit", "timezone") + '",\n' +
 				'ranges: {\n' +
 					getRanges(timespan, body) + '\n' +
 				'},\n' +
@@ -102,12 +94,8 @@ app.get("/:tickersymbol/:timespan", function(req, res) {
 					getValuesItems(body) + '\n' +
 				'}\n' +
 			'};';
-			getValuesItems(body);
 			console.log(formattedjs);
-			console.log("-------------");
-			console.log("-------------");
 			res.writeHead(httpres.statusCode, httpres.headers);
-
 			res.end(body);
 		});
 	});
