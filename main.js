@@ -48,7 +48,7 @@ function ranges(body) {
 }
 
 function getRanges(timespan, body) {
-	if (timespan.indexOf('d') > -1 && timespan.indexOf('1') === -1) {
+	if (timespan.indexOf('d') > -1 && timespan.indexOf('1d') === -1) {
 		return ranges(body);
 	} else {
 		return "";
@@ -64,6 +64,14 @@ function getValuesItems(body) {
 		else formattedValue += splitValue[0] + ": " + splitValue[1];
 	}
 	return formattedValue;
+}
+
+function getDatesDifference(first) {
+	var oneDay = 24 * 60 * 60 * 1000;
+	var today = new Date();
+	var date = new Date(first.substring(0, 4), first.substring(4, 6) - 1, first.substring(6, 8));
+	var diffDays = Math.round(Math.abs((date.getTime() - today.getTime())/(oneDay))) - 1;
+	return diffDays;
 }
 
 app.get("/:tickersymbol/:timespan", function(req, res) {
@@ -94,6 +102,51 @@ app.get("/:tickersymbol/:timespan", function(req, res) {
 				'}\n' +
 			'};';
 			console.log(formattedjs);
+			res.writeHead(httpres.statusCode, httpres.headers);
+			res.end(formattedjs);
+		});
+	});
+	httpreq.end();
+});
+
+app.get("/:tickersymbol/:date/:timespan", function(req, res) {
+	var tickersymbol = req.params.tickersymbol;
+	var date = req.params.date;
+	var timespan = req.params.timespan;
+	var diffDays = getDatesDifference(date);	
+	formattedjs = 'window.YSTOKJSDAT = {\n';
+	var options = {
+		hostname: 'chartapi.finance.yahoo.com',
+		port: 80,
+		path: '/instrument/1.0/' + tickersymbol + '/chartdata;type=quote;range=' + diffDays + 'd/csv',
+		method: 'GET'
+	};
+	var httpreq = http.request(options, function(httpres) {
+		var body;
+		httpres.on('data', function(chunk) {
+			body += chunk;
+		});
+		httpres.on('end', function() {
+			if (diffDays > 90) {
+				formattedjs +=
+					'status: "ERROR",\n' +
+					'detail: "Data is available only for the most recent 90 calendar days."\n' +
+				'};';
+			} else {
+				formattedjs += 
+					'symbol: "' + tickersymbol + '",\n' +
+					'name: "' + getValues(body, "Company-Name", "Exchange") + '",\n' +
+					'span: "' + timespan + '",\n' +
+					'unit: "' + getValues(body, "unit", "time") + '",\n' +
+					'ranges: {\n' +
+						getRanges(timespan, body) + '\n' +
+					'},\n' +
+					'values: {\n' +
+						getValuesItems(body) + '\n' +
+					'}\n' +
+				'};';
+			}
+			//console.log(formattedjs);
 			res.writeHead(httpres.statusCode, httpres.headers);
 			res.end(formattedjs);
 		});
