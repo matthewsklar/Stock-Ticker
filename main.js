@@ -32,28 +32,26 @@ function getValues(string, title, end) {
 	return(testRE[1].replace("\\n", ""));
 }
 
+function ranges(body) {
+	var range = getValues(body, "range", "Timestamp:");
+	var splitRange = range.split('range:');
+	var formattedRange = "";
+	for (var i = 0; i < splitRange.length; i++) {
+		splitRange[i] = splitRange[i].replace("\\n", "");
+	}
+	for (var i = 0; i < splitRange.length; i++) {
+		var splitSRange = splitRange[i].split(',');
+		if (i != splitRange.length - 1) formattedRange += splitSRange[0] + ": [" + splitSRange[1] + ',' + splitSRange[2] + '],\n';
+		else formattedRange += splitSRange[0] + ": [" + splitSRange[1] + ',' + splitSRange[2] + ']';
+	}
+	return formattedRange;
+}
+
 function getRanges(timespan, body) {
-	switch (timespan) {
-		case '1m' :
-			return "";
-			break;
-		case '1d' :
-			return "";
-			break;
-		case '5d' :
-			var range = getValues(body, "range", "Timestamp:");
-			var splitRange = range.split('range:');
-			var formattedRange = "";
-			for (var i = 0; i < splitRange.length; i++) {
-				splitRange[i] = splitRange[i].replace("\\n", "");
-			}
-			for (var i = 0; i < splitRange.length; i++) {
-				var splitSRange = splitRange[i].split(',');
-				if (i != 4) formattedRange += splitSRange[0] + ": [" + splitSRange[1] + ',' + splitSRange[2] + '],\n';
-				else formattedRange += splitSRange[0] + ": [" + splitSRange[1] + ',' + splitSRange[2] + ']';
-			}
-			return formattedRange;
-			break;
+	if (timespan.indexOf('d') > -1 && timespan.indexOf('1') === -1) {
+		return ranges(body);
+	} else {
+		return "";
 	}
 }
 
