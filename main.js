@@ -32,13 +32,14 @@ function getValues(string, title, end) {
 	return(testRE[1].replace("\\n", ""));
 }
 
-function ranges(body) {
+function ranges(body, splitR) {
 	var range = getValues(body, "range", "Timestamp:");
 	var splitRange = range.split('range:');
 	var formattedRange = "";
 	for (var i = 0; i < splitRange.length; i++) {
 		splitRange[i] = splitRange[i].replace("\\n", "");
 	}
+	if (splitR) return splitRange;
 	for (var i = 0; i < splitRange.length; i++) {
 		var splitSRange = splitRange[i].split(',');
 		if (i != splitRange.length - 1) formattedRange += splitSRange[0] + ": [" + splitSRange[1] + ',' + splitSRange[2] + '],\n';
@@ -49,29 +50,68 @@ function ranges(body) {
 
 function getRanges(timespan, body) {
 	if (timespan.indexOf('d') > -1 && timespan.indexOf('1d') === -1) {
-		return ranges(body);
+		return ranges(body, false);
 	} else {
 		return "";
 	}
 }
+
+function getDateRanges(timespan, body, date) {
+	var splitRanges = ranges(body, true);
+	var formattedRange = "";
+	var dateLocation;
+	for (var i = 0; i < splitRanges.length; i++) {
+		if (splitRanges[i].split(',')[0] == date) {
+			for (var j = 0; j < timespan.substring(0, timespan.length - 1); j++) {
+				var splitSRanges = splitRanges[i + j].split(',');
+				if (j != timespan.substring(0, timespan.length - 1) - 1) formattedRange += splitSRanges[0] + ': [' + splitRanges[1] + ',' + splitRanges[2] + '],\n';
+				else formattedRange += splitSRanges[0] + ': [' + splitRanges[1] + ',' + splitRanges[2] + ']';
+			}
+		}
+	}
+	return formattedRange;
+}
+
 
 function getValuesItems(body) {
 	var values = ((body.split("volume:")[1])).split('\n');
 	var formattedValue = "";
 	for (var i = 1; i < values.length - 1; i++) {
 		var splitValue = values[i].split(',');
-		if (i != values.length - 2) formattedValue += splitValue[0] + ": " + splitValue[1] + ',\n';
-		else formattedValue += splitValue[0] + ": " + splitValue[1];
+		if (i != values.length - 2) formattedValue +=  splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + '],\n';
+		else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + ']';
 	}
 	return formattedValue;
 }
 
-function getDatesDifference(first) {
-	var oneDay = 24 * 60 * 60 * 1000;
-	var today = new Date();
-	var date = new Date(first.substring(0, 4), first.substring(4, 6) - 1, first.substring(6, 8));
-	var diffDays = Math.round(Math.abs((date.getTime() - today.getTime())/(oneDay))) - 1;
-	return diffDays;
+function getDateValues(timespan, body, date) {
+	var values = ((body.split("volume:")[1])).split('\n');
+	var days = timespan.substring(0, timespan.length - 1);
+	var formattedValue = "";
+	if (days == 1) {
+		for (var i = 1; i < 391; i++) {
+			var splitValue = values[i].split(',');
+			if (i != values.length) formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + '],\n';
+			else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + ']';
+		}
+	} else {
+		for (var i = 1; i < days * 79 + 1; i++) {
+			var splitValue = values[i].split(',');
+			if (i != days * 79) formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + '],\n';
+			else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + ']';
+		}
+	}
+	return formattedValue;
+}
+
+function isError(body, date) {
+	var splitRanges = ranges(body, true);
+	for (var i = 0; i < splitRanges.length; i++) {
+		if (splitRanges[i].split(',')[0] == date) {
+			return false;
+		}
+	}
+	return true;
 }
 
 app.get("/:tickersymbol/:timespan", function(req, res) {
@@ -101,7 +141,6 @@ app.get("/:tickersymbol/:timespan", function(req, res) {
 					getValuesItems(body) + '\n' +
 				'}\n' +
 			'};';
-			console.log(formattedjs);
 			res.writeHead(httpres.statusCode, httpres.headers);
 			res.end(formattedjs);
 		});
@@ -113,12 +152,11 @@ app.get("/:tickersymbol/:date/:timespan", function(req, res) {
 	var tickersymbol = req.params.tickersymbol;
 	var date = req.params.date;
 	var timespan = req.params.timespan;
-	var diffDays = getDatesDifference(date);	
 	formattedjs = 'window.YSTOKJSDAT = {\n';
 	var options = {
 		hostname: 'chartapi.finance.yahoo.com',
 		port: 80,
-		path: '/instrument/1.0/' + tickersymbol + '/chartdata;type=quote;range=' + diffDays + 'd/csv',
+		path: '/instrument/1.0/' + tickersymbol + '/chartdata;type=quote;range=15d/csv',
 		method: 'GET'
 	};
 	var httpreq = http.request(options, function(httpres) {
@@ -127,10 +165,10 @@ app.get("/:tickersymbol/:date/:timespan", function(req, res) {
 			body += chunk;
 		});
 		httpres.on('end', function() {
-			if (diffDays > 90) {
+			if (isError(body, date)) {
 				formattedjs +=
 					'status: "ERROR",\n' +
-					'detail: "Data is available only for the most recent 90 calendar days."\n' +
+					'detail: "Data is available only for the most recent 15 market days."\n' +
 				'};';
 			} else {
 				formattedjs += 
@@ -139,14 +177,13 @@ app.get("/:tickersymbol/:date/:timespan", function(req, res) {
 					'span: "' + timespan + '",\n' +
 					'unit: "' + getValues(body, "unit", "time") + '",\n' +
 					'ranges: {\n' +
-						getRanges(timespan, body) + '\n' +
+						getDateRanges(timespan, body, date) + '\n' +
 					'},\n' +
 					'values: {\n' +
-						getValuesItems(body) + '\n' +
+						getDateValues(timespan, body, date) + '\n' +
 					'}\n' +
 				'};';
 			}
-			//console.log(formattedjs);
 			res.writeHead(httpres.statusCode, httpres.headers);
 			res.end(formattedjs);
 		});
