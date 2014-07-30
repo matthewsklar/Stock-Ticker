@@ -64,8 +64,8 @@ function getDateRanges(timespan, body, date) {
 		if (splitRanges[i].split(',')[0] == date) {
 			for (var j = 0; j < timespan.substring(0, timespan.length - 1); j++) {
 				var splitSRanges = splitRanges[i + j].split(',');
-				if (j != timespan.substring(0, timespan.length - 1) - 1) formattedRange += splitSRanges[0] + ': [' + splitRanges[1] + ',' + splitRanges[2] + '],\n';
-				else formattedRange += splitSRanges[0] + ': [' + splitRanges[1] + ',' + splitRanges[2] + ']';
+				if (j != timespan.substring(0, timespan.length - 1) - 1) formattedRange += splitSRanges[0] + ': [' + splitSRanges[1] + ',' + splitSRanges[2] + '],\n';
+				else formattedRange += splitSRanges[0] + ': [' + splitSRanges[1] + ',' + splitSRanges[2] + ']';
 			}
 		}
 	}
@@ -78,8 +78,8 @@ function getValuesItems(body) {
 	var formattedValue = "";
 	for (var i = 1; i < values.length - 1; i++) {
 		var splitValue = values[i].split(',');
-		if (i != values.length - 2) formattedValue +=  splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + '],\n';
-		else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + ']';
+		if (i != values.length - 2) formattedValue +=  splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[5] + '],\n';
+		else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[5] + ']';
 	}
 	return formattedValue;
 }
@@ -91,14 +91,14 @@ function getDateValues(timespan, body, date) {
 	if (days == 1) {
 		for (var i = 1; i < 391; i++) {
 			var splitValue = values[i].split(',');
-			if (i != values.length) formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + '],\n';
-			else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + ']';
+			if (i != values.length) formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[5] + '],\n';
+			else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[5] + ']';
 		}
 	} else {
 		for (var i = 1; i < days * 79 + 1; i++) {
 			var splitValue = values[i].split(',');
-			if (i != days * 79) formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + '],\n';
-			else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[2] + ']';
+			if (i != days * 79) formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[5] + '],\n';
+			else formattedValue += splitValue[0] + ": [" + splitValue[1] + ',' + splitValue[5] + ']';
 		}
 	}
 	return formattedValue;
